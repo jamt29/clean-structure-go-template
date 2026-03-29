@@ -1,0 +1,15 @@
+package http
+
+import "github.com/gin-gonic/gin"
+
+type GinHealthHandler struct{}
+
+func NewGinHealthHandler() GinHealthHandler {
+	return GinHealthHandler{}
+}
+
+func (h GinHealthHandler) Health(c *gin.Context) {
+	c.JSON(200, gin.H{
+		"status": "ok",
+	})
+}

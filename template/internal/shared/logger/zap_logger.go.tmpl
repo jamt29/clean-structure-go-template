@@ -1,0 +1,31 @@
+package logger
+
+import "go.uber.org/zap"
+
+var l *zap.SugaredLogger
+
+func Init(level string) error {
+	cfg := zap.NewProductionConfig()
+	if level == "debug" {
+		cfg = zap.NewDevelopmentConfig()
+	}
+
+	base, err := cfg.Build()
+	if err != nil {
+		return err
+	}
+
+	l = base.Sugar()
+	return nil
+}
+
+func Error(msg string, keysAndValues ...string) {
+	if l == nil {
+		return
+	}
+	args := make([]any, 0, len(keysAndValues))
+	for _, kv := range keysAndValues {
+		args = append(args, kv)
+	}
+	l.Errorw(msg, args...)
+}

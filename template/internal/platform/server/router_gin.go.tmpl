@@ -1,0 +1,21 @@
+package server
+
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	httpx "{{ module_path }}/internal/modules/health/presentation/http"
+)
+
+func (s *Server) configureRouter() {
+	r := gin.New()
+	r.Use(gin.Recovery())
+
+	healthHandler := httpx.NewGinHealthHandler()
+	r.GET("/health", healthHandler.Health)
+
+	s.http = &http.Server{
+		Addr:    ":" + s.cfg.Server.Port,
+		Handler: r,
+	}
+}

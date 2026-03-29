@@ -1,0 +1,6 @@
+package server
+
+type fiberApp interface {
+	Listen(addr string) error
+	Shutdown() error
+}

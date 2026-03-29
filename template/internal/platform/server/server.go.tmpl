@@ -1,0 +1,45 @@
+package server
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+
+	"{{ module_path }}/internal/platform/config"
+)
+
+type Server struct {
+	cfg  config.Config
+	http *http.Server
+	app  fiberApp
+}
+
+func New(cfg config.Config) (*Server, error) {
+	s := &Server{cfg: cfg}
+	s.configureRouter()
+	return s, nil
+}
+
+func (s *Server) Start() error {
+	if s.http != nil {
+		return s.http.ListenAndServe()
+	}
+
+	if s.app != nil {
+		return s.app.Listen(":" + s.cfg.Server.Port)
+	}
+
+	return fmt.Errorf("http server not configured")
+}
+
+func (s *Server) Shutdown(ctx context.Context) error {
+	if s.http != nil {
+		return s.http.Shutdown(ctx)
+	}
+
+	if s.app != nil {
+		return s.app.Shutdown()
+	}
+
+	return nil
+}

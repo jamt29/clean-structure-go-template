@@ -1,0 +1,70 @@
+package config
+
+import "os"
+
+type Config struct {
+	Server   ServerConfig
+	Logging  LoggingConfig
+	Postgres PostgresConfig
+	MongoDB  MongoConfig
+	Redis    RedisConfig
+	MinIO    MinIOConfig
+}
+
+type ServerConfig struct {
+	Port string
+}
+
+type LoggingConfig struct {
+	Level string
+}
+
+type PostgresConfig struct {
+	DSN string
+}
+
+type MongoConfig struct {
+	URI string
+}
+
+type RedisConfig struct {
+	Addr string
+}
+
+type MinIOConfig struct {
+	Endpoint  string
+	AccessKey string
+	SecretKey string
+}
+
+func Load() (Config, error) {
+	port := getenv("APP_SERVER_PORT", "8080")
+	level := getenv("APP_LOG_LEVEL", "info")
+	postgresDSN := getenv("APP_POSTGRES_DSN", "postgres://postgres:postgres@localhost:5432/app?sslmode=disable")
+	mongoURI := getenv("APP_MONGO_URI", "mongodb://localhost:27017")
+	redisAddr := getenv("APP_REDIS_ADDR", "localhost:6379")
+	minioEndpoint := getenv("APP_MINIO_ENDPOINT", "localhost:9000")
+	minioAccessKey := getenv("APP_MINIO_ACCESS_KEY", "minioadmin")
+	minioSecretKey := getenv("APP_MINIO_SECRET_KEY", "minioadmin")
+
+	return Config{
+		Server:   ServerConfig{Port: port},
+		Logging:  LoggingConfig{Level: level},
+		Postgres: PostgresConfig{DSN: postgresDSN},
+		MongoDB:  MongoConfig{URI: mongoURI},
+		Redis:    RedisConfig{Addr: redisAddr},
+		MinIO: MinIOConfig{
+			Endpoint:  minioEndpoint,
+			AccessKey: minioAccessKey,
+			SecretKey: minioSecretKey,
+		},
+	}, nil
+}
+
+func getenv(key, fallback string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	return v
+}

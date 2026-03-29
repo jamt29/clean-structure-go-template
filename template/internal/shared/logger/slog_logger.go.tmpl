@@ -1,0 +1,37 @@
+package logger
+
+import (
+	"log/slog"
+	"os"
+)
+
+var l *slog.Logger
+
+func Init(level string) error {
+	slogLevel := new(slog.LevelVar)
+	switch level {
+	case "debug":
+		slogLevel.Set(slog.LevelDebug)
+	case "warn":
+		slogLevel.Set(slog.LevelWarn)
+	case "error":
+		slogLevel.Set(slog.LevelError)
+	default:
+		slogLevel.Set(slog.LevelInfo)
+	}
+
+	handler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slogLevel})
+	l = slog.New(handler)
+	return nil
+}
+
+func Error(msg string, keysAndValues ...string) {
+	if l == nil {
+		return
+	}
+	args := make([]any, 0, len(keysAndValues))
+	for _, kv := range keysAndValues {
+		args = append(args, kv)
+	}
+	l.Error(msg, args...)
+}

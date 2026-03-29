@@ -1,0 +1,15 @@
+package server
+
+import (
+	"github.com/gofiber/fiber/v2"
+	httpx "{{ module_path }}/internal/modules/health/presentation/http"
+)
+
+func (s *Server) configureRouter() {
+	app := fiber.New()
+
+	healthHandler := httpx.NewFiberHealthHandler()
+	app.Get("/health", healthHandler.Health)
+
+	s.app = app
+}

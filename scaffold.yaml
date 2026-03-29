@@ -1,0 +1,198 @@
+name: "clean-structure-go"
+version: "0.0.1"
+author: "structify"
+language: "go"
+architecture: "clean"
+description: "Base estructural de arquitectura limpia en Go (platform/shared/modules) con opciones de HTTP y logger"
+tags: ["go", "clean", "structure", "api"]
+
+inputs:
+  - id: project_name
+    prompt: "Project name?"
+    type: string
+    required: true
+    validate: "^[a-zA-Z][a-zA-Z0-9_-]*$"
+
+  - id: module_path
+    prompt: "Module path?"
+    type: string
+    default: "github.com/user/{{ project_name | kebab_case }}"
+
+  - id: http_framework
+    prompt: "HTTP framework?"
+    type: enum
+    options: [gin, fiber]
+    default: gin
+
+  - id: logger
+    prompt: "Logger?"
+    type: enum
+    options: [zap, slog]
+    default: zap
+
+  - id: observability
+    prompt: "Observability?"
+    type: enum
+    options: [none, basic]
+    default: none
+
+  - id: sql_database
+    prompt: "SQL database?"
+    type: enum
+    options: [none, postgres]
+    default: postgres
+
+  - id: sql_tooling
+    prompt: "SQL tooling?"
+    type: enum
+    options: [none, sqlc]
+    default: sqlc
+    when: sql_database == "postgres"
+
+  - id: use_mongodb
+    prompt: "Include MongoDB scaffold?"
+    type: bool
+    default: false
+
+  - id: use_redis
+    prompt: "Include Redis scaffold?"
+    type: bool
+    default: false
+
+  - id: use_minio
+    prompt: "Include MinIO scaffold?"
+    type: bool
+    default: false
+
+  - id: use_air
+    prompt: "Enable hot reload with Air?"
+    type: bool
+    default: true
+
+files:
+  - include: "internal/platform/server/router_gin.go.tmpl"
+    when: http_framework == "gin" && observability == "none"
+
+  - include: "internal/platform/server/router_fiber.go.tmpl"
+    when: http_framework == "fiber" && observability == "none"
+
+  - include: "internal/platform/server/router_gin_obs.go.tmpl"
+    when: http_framework == "gin" && observability == "basic"
+
+  - include: "internal/platform/server/router_fiber_obs.go.tmpl"
+    when: http_framework == "fiber" && observability == "basic"
+
+  - include: "internal/modules/health/presentation/http/handler_gin.go.tmpl"
+    when: http_framework == "gin"
+
+  - include: "internal/modules/health/presentation/http/handler_fiber.go.tmpl"
+    when: http_framework == "fiber"
+
+  - include: "internal/shared/logger/zap_logger.go.tmpl"
+    when: logger == "zap"
+
+  - include: "internal/shared/logger/slog_logger.go.tmpl"
+    when: logger == "slog"
+
+  - include: "internal/shared/database/postgres.go.tmpl"
+    when: sql_database == "postgres"
+
+  - include: "internal/shared/database/mongodb.go.tmpl"
+    when: use_mongodb == true
+
+  - include: "internal/shared/cache/redis.go.tmpl"
+    when: use_redis == true
+
+  - include: "internal/shared/storage/minio.go.tmpl"
+    when: use_minio == true
+
+  - include: ".air.toml.tmpl"
+    when: use_air == true
+
+  - include: "sqlc.yaml.tmpl"
+    when: sql_database == "postgres" && sql_tooling == "sqlc"
+
+  - include: "internal/shared/database/queries/health.sql"
+    when: sql_database == "postgres" && sql_tooling == "sqlc"
+
+  - include: "migrations/**"
+    when: sql_database == "postgres"
+
+  - exclude: "internal/platform/server/router_gin.go.tmpl"
+    when: http_framework == "fiber" || observability == "basic"
+  - exclude: "internal/platform/server/router_fiber.go.tmpl"
+    when: http_framework == "gin" || observability == "basic"
+  - exclude: "internal/platform/server/router_gin_obs.go.tmpl"
+    when: http_framework == "fiber" || observability == "none"
+  - exclude: "internal/platform/server/router_fiber_obs.go.tmpl"
+    when: http_framework == "gin" || observability == "none"
+
+  - exclude: "internal/modules/health/presentation/http/handler_fiber.go.tmpl"
+    when: http_framework == "gin"
+  - exclude: "internal/modules/health/presentation/http/handler_gin.go.tmpl"
+    when: http_framework == "fiber"
+
+  - exclude: "internal/shared/logger/slog_logger.go.tmpl"
+    when: logger == "zap"
+  - exclude: "internal/shared/logger/zap_logger.go.tmpl"
+    when: logger == "slog"
+
+  - exclude: "internal/shared/database/postgres.go.tmpl"
+    when: sql_database == "none"
+  - exclude: "internal/shared/database/mongodb.go.tmpl"
+    when: use_mongodb == false
+  - exclude: "internal/shared/cache/redis.go.tmpl"
+    when: use_redis == false
+  - exclude: "internal/shared/storage/minio.go.tmpl"
+    when: use_minio == false
+  - exclude: ".air.toml.tmpl"
+    when: use_air == false
+  - exclude: "sqlc.yaml.tmpl"
+    when: sql_database == "none" || sql_tooling == "none"
+  - exclude: "internal/shared/database/queries/**"
+    when: sql_database == "none" || sql_tooling == "none"
+  - exclude: "migrations/**"
+    when: sql_database == "none"
+
+steps:
+  - name: "go mod init"
+    run: "go mod init {{ module_path }}"
+
+  - name: "install gin"
+    run: "go get github.com/gin-gonic/gin"
+    when: http_framework == "gin"
+
+  - name: "install fiber"
+    run: "go get github.com/gofiber/fiber/v2"
+    when: http_framework == "fiber"
+
+  - name: "install zap"
+    run: "go get go.uber.org/zap"
+    when: logger == "zap"
+
+  - name: "install postgres deps"
+    run: "go get github.com/jackc/pgx/v5 github.com/jackc/pgx/v5/pgxpool"
+    when: sql_database == "postgres"
+
+  - name: "install mongo deps"
+    run: "go get go.mongodb.org/mongo-driver/mongo"
+    when: use_mongodb == true
+
+  - name: "install redis deps"
+    run: "go get github.com/redis/go-redis/v9"
+    when: use_redis == true
+
+  - name: "install minio deps"
+    run: "go get github.com/minio/minio-go/v7"
+    when: use_minio == true
+
+  - name: "install observability deps"
+    run: "go get github.com/prometheus/client_golang/prometheus/promhttp"
+    when: observability == "basic"
+
+  - name: "install fiber adaptor (metrics)"
+    run: "go get github.com/gofiber/adaptor/v2"
+    when: http_framework == "fiber" && observability == "basic"
+
+  - name: "go mod tidy"
+    run: "go mod tidy"

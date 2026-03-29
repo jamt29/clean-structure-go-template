@@ -1,0 +1,27 @@
+APP_NAME={{ project_name | snake_case }}
+
+.PHONY: run dev build test tidy docker-up docker-down sqlc
+
+run:
+	go run ./cmd/api
+
+dev:
+	air
+
+build:
+	go build -o bin/$(APP_NAME) ./cmd/api
+
+test:
+	go test ./...
+
+tidy:
+	go mod tidy
+
+sqlc:
+	sqlc generate
+
+docker-up:
+	docker compose up -d --build
+
+docker-down:
+	docker compose down

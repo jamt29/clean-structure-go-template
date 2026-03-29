@@ -1,0 +1,18 @@
+package server
+
+import (
+	"github.com/gofiber/adaptor/v2"
+	"github.com/gofiber/fiber/v2"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	httpx "{{ module_path }}/internal/modules/health/presentation/http"
+)
+
+func (s *Server) configureRouter() {
+	app := fiber.New()
+
+	healthHandler := httpx.NewFiberHealthHandler()
+	app.Get("/health", healthHandler.Health)
+	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
+
+	s.app = app
+}

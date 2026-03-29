@@ -1,0 +1,43 @@
+# {{ project_name }}
+
+Base estructural para un servicio Go con arquitectura limpia modular:
+
+- `cmd/api`: entrypoint del servicio.
+- `internal/platform`: bootstrap y server.
+- `internal/shared`: utilidades transversales (logger, etc.).
+- `internal/modules`: módulos de dominio (incluye `health` como ejemplo mínimo).
+
+## Stack seleccionado
+
+- HTTP: `{{ http_framework }}`
+- Logger: `{{ logger }}`
+- Observability: `{{ observability }}`
+- SQL: `{{ sql_database }}`
+- SQL tooling: `{{ sql_tooling }}`
+- MongoDB: `{{ use_mongodb }}`
+- Redis: `{{ use_redis }}`
+- MinIO: `{{ use_minio }}`
+- Air (hot reload): `{{ use_air }}`
+
+## Ejecutar
+
+```bash
+go run ./cmd/api
+```
+
+Con hot reload (si activaste `use_air`):
+
+```bash
+air
+```
+
+Variables útiles:
+
+- `APP_SERVER_PORT` (default: `8080`)
+- `APP_LOG_LEVEL` (default: `info`)
+- `APP_POSTGRES_DSN` (ej: `postgres://user:pass@localhost:5432/app?sslmode=disable`)
+- `APP_MONGO_URI` (ej: `mongodb://localhost:27017`)
+- `APP_REDIS_ADDR` (ej: `localhost:6379`)
+- `APP_MINIO_ENDPOINT` (ej: `localhost:9000`)
+- `APP_MINIO_ACCESS_KEY`
+- `APP_MINIO_SECRET_KEY`
